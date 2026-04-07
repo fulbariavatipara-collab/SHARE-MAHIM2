@@ -13,63 +13,63 @@ targets = [
     "@studywar2021",
     "@hsc234",
     "@Acs_Udvash_Link",
+    "@hscacademicandadmissionchatgroup",
+    "@hsc_sharing",
+    "@chemistryteli",
+    "@Dacs2025",
+    "@linkedstudies",
+    "@buetkuetruetcuet",
+    "@haters_hsc",
+    "@superb1k",
+    "@HHEHRETW",
 ]
 
-client = TelegramClient(
-    "session_name",
-    api_id,
-    api_hash,
-    device_model="Railway",
-    system_version="Linux",
-    app_version="1.0"
-)
+client = TelegramClient("session_name", api_id, api_hash)
 
 # ===== CONTROL =====
 FORWARD_ON = False
-MODE = "trigger"
-FORWARD_DELAY = 120
+MODE = "trigger"        # "trigger" or "timer"
+FORWARD_DELAY = 200     # seconds
 MSG_LIMIT = 5
 
+# ===== CACHE =====
 cached_msgs = []
 
-# ===== CACHE =====
+
 async def update_cache():
     global cached_msgs
     cached_msgs = await client.get_messages(source_channel, limit=MSG_LIMIT)
     print("⚡ Cache Updated")
 
+
+# ===== AUTO CACHE UPDATE =====
 async def auto_cache():
     while True:
         try:
             await update_cache()
-            print("♻ Auto refreshed")
         except Exception as e:
-            print("❌ Cache error:", e)
-        await asyncio.sleep(180)
+            print(e)
+        await asyncio.sleep(300)  # 5 minutes
 
-# ===== SAFE SEND =====
+
+# ===== FAST SEND =====
 async def send_copy(target, msg):
     try:
-        await asyncio.sleep(random.randint(1,3))  # anti-ban delay
-
         if msg.media:
             await client.send_file(target, msg.media, caption=msg.text or "")
         else:
             await client.send_message(target, msg.text)
-
     except FloodWaitError as e:
-        print(f"⏳ FloodWait {e.seconds}s")
         await asyncio.sleep(e.seconds)
-
     except Exception as e:
-        print("❌ Send error:", e)
+        print(e)
 
-# ===== TRIGGER MODE =====
+
+# ===== ULTRA FAST TRIGGER (same group only) =====
 @client.on(events.NewMessage(chats=targets))
 async def trigger_mode(event):
 
     global FORWARD_ON, MODE
-
     if not FORWARD_ON or MODE != "trigger":
         return
 
@@ -81,64 +81,58 @@ async def trigger_mode(event):
         return
 
     msg = random.choice(cached_msgs)
+
+    # শুধুমাত্র event আসা গ্রুপে পাঠাবে
     await send_copy(event.chat_id, msg)
+    print(f"⚡ Trigger sent to {event.chat.title if hasattr(event.chat,'title') else event.chat_id}")
 
-    print("⚡ Trigger sent")
 
-# ===== TIMER MODE =====
+# ===== TIMER LOOP =====
 async def loop_system():
     while True:
-        try:
-            if FORWARD_ON and MODE == "timer":
+        if FORWARD_ON and MODE == "timer":
 
-                if not cached_msgs:
-                    await asyncio.sleep(5)
-                    continue
-
-                msg = random.choice(cached_msgs)
-
-                await asyncio.gather(*[
-                    send_copy(t, msg) for t in targets
-                ])
-
-                print(f"⏱ Timer sent → {FORWARD_DELAY}s")
-
-                await asyncio.sleep(FORWARD_DELAY)
-            else:
+            if not cached_msgs:
                 await asyncio.sleep(5)
+                continue
 
-        except Exception as e:
-            print("❌ Loop error:", e)
+            msg = random.choice(cached_msgs)
+
+            # সব target group-এ send করবে
+            await asyncio.gather(*[send_copy(t, msg) for t in targets])
+            print(f"⏱ Timer sent → Next in {FORWARD_DELAY}s")
+
+            await asyncio.sleep(FORWARD_DELAY)
+        else:
             await asyncio.sleep(5)
 
-# ===== COMMAND HANDLER =====
-@client.on(events.NewMessage)
+
+# ===== COMMANDS =====
+@client.on(events.NewMessage(from_users='me'))
 async def command_handler(event):
 
     global FORWARD_ON, MODE, FORWARD_DELAY, MSG_LIMIT
 
-    me = await client.get_me()
-
-    if event.sender_id != me.id:
+    if not event.is_private or event.chat_id != event.sender_id:
         return
 
     text = event.raw_text.lower()
 
     if text == "/on":
         FORWARD_ON = True
-        await event.reply("✅ ON")
+        await event.reply("✅ Forward ON")
 
     elif text == "/off":
         FORWARD_ON = False
-        await event.reply("⛔ OFF")
+        await event.reply("⛔ Forward OFF")
 
     elif text.startswith("/mode"):
         MODE = text.split()[1]
-        await event.reply(f"⚙ Mode → {MODE}")
+        await event.reply(f"⚙ Mode set to {MODE}")
 
     elif text.startswith("/settime"):
         FORWARD_DELAY = int(text.split()[1])
-        await event.reply(f"⏱ {FORWARD_DELAY}s")
+        await event.reply(f"⏱ Timer set {FORWARD_DELAY}s")
 
     elif text.startswith("/setlimit"):
         MSG_LIMIT = int(text.split()[1])
@@ -147,48 +141,41 @@ async def command_handler(event):
 
     elif text == "/refresh":
         await update_cache()
-        await event.reply("♻ Refreshed")
+        await event.reply("♻ Cache refreshed")
 
     elif text == "/status":
         await event.reply(
-            f"ON: {FORWARD_ON}\nMODE: {MODE}\nTIME: {FORWARD_DELAY}s\nLIMIT: {MSG_LIMIT}"
+            f"Forward: {'ON' if FORWARD_ON else 'OFF'}\n"
+            f"Mode: {MODE}\n"
+            f"Timer Delay: {FORWARD_DELAY}s\n"
+            f"Limit: {MSG_LIMIT}"
         )
 
     elif text == "/help":
         await event.reply(
-            "/on /off\n"
-            "/mode trigger|timer\n"
-            "/settime 120\n"
-            "/setlimit 5\n"
-            "/refresh\n"
-            "/status"
+            "📌 Commands:\n"
+            "/on           → Forward ON\n"
+            "/off          → Forward OFF\n"
+            "/mode trigger → Ultra Fast Trigger mode (same group only)\n"
+            "/mode timer   → Timer mode (all target groups)\n"
+            "/settime 200  → Timer delay in seconds\n"
+            "/setlimit 5   → Last N messages cache\n"
+            "/refresh      → Force cache refresh\n"
+            "/status       → Show current status\n"
+            "/help         → Show this help text"
         )
 
-# ===== MAIN =====
+
+# ===== START =====
 async def main():
-    await client.connect()
-
-    if not await client.is_user_authorized():
-        print("❌ Session invalid")
-        return
-
-    print("🔥 Bot Started")
+    await client.start()
+    print("🔥 Super Fast 0.1s Trigger Userbot Started")
 
     await update_cache()
-
     client.loop.create_task(auto_cache())
     client.loop.create_task(loop_system())
 
     await client.run_until_disconnected()
 
-# ===== AUTO RESTART =====
-async def safe_main():
-    while True:
-        try:
-            await main()
-        except Exception as e:
-            print("💥 Crash:", e)
-            await asyncio.sleep(5)
-            print("🔄 Restarting...")
 
-asyncio.run(safe_main())
+asyncio.run(main())
