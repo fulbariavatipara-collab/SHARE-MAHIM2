@@ -1,15 +1,14 @@
 import asyncio
 import random
+import os
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError
 
 # ===== CONFIG =====
-api_id = 30041446
-api_hash = "78a0ef57339654c99dbf5996d7761a67"
-
-# ===== SESSION =====
-SESSION = "1BVtsOJIBu5MWmY20fZgMRv-ItHra1aml68s7D_Gm9S_f8bayF1uWOlfgbHkOq8tdXbUqA5YfTfXzhxPhGbVuvh2BZu-B7mbZoIBDiEfxaszRC-WKRqMJDyz-kmM8z-oHpRscj730-dwDqWawASvoqWmZEY5aGvtRhEuyTreZJMEn9KkVY0DmQUuy-bzPbJa0oSyTXKSJaWUE-FI_mjjyf8N7DI93uIX2PPi2KHyeSkz6hWdBDaqoSArrH2g4Q_4ipIRxVbDMaND9fgXjL2Op17iFQEA6WJTG21TWZjv8dfIV0tkeQRnrnlClU3mJ3qYA09RufPNWcTpLLtEgrV0zv0x51rAZdFQ="  # <-- এখানে valid session বসাও
+api_id = int(os.getenv("30041446"))
+api_hash = os.getenv("78a0ef57339654c99dbf5996d7761a67")
+SESSION = os.getenv("1BVtsOJIBu5MWmY20fZgMRv-ItHra1aml68s7D_Gm9S_f8bayF1uWOlfgbHkOq8tdXbUqA5YfTfXzhxPhGbVuvh2BZu-B7mbZoIBDiEfxaszRC-WKRqMJDyz-kmM8z-oHpRscj730-dwDqWawASvoqWmZEY5aGvtRhEuyTreZJMEn9KkVY0DmQUuy-bzPbJa0oSyTXKSJaWUE-FI_mjjyf8N7DI93uIX2PPi2KHyeSkz6hWdBDaqoSArrH2g4Q_4ipIRxVbDMaND9fgXjL2Op17iFQEA6WJTG21TWZjv8dfIV0tkeQRnrnlClU3mJ3qYA09RufPNWcTpLLtEgrV0zv0x51rAZdFQ=")
 
 source_channel = "@REPLITSHARE"
 
@@ -49,10 +48,10 @@ async def auto_cache():
         try:
             await update_cache()
         except Exception as e:
-            print(e)
+            print("Cache error:", e)
         await asyncio.sleep(300)
 
-# ===== FAST SEND =====
+# ===== SEND =====
 async def send_copy(target, msg):
     try:
         if msg.media:
@@ -60,9 +59,10 @@ async def send_copy(target, msg):
         else:
             await client.send_message(target, msg.text or "")
     except FloodWaitError as e:
+        print(f"Flood wait: {e.seconds}s")
         await asyncio.sleep(e.seconds)
     except Exception as e:
-        print(e)
+        print("Send error:", e)
 
 # ===== TRIGGER MODE =====
 @client.on(events.NewMessage(chats=targets))
@@ -72,7 +72,7 @@ async def trigger_mode(event):
         return
 
     sender = await event.get_sender()
-    if sender.bot:
+    if sender and sender.bot:
         return
 
     if not cached_msgs:
@@ -88,13 +88,14 @@ async def loop_system():
             if not cached_msgs:
                 await asyncio.sleep(5)
                 continue
+
             msg = random.choice(cached_msgs)
             await asyncio.gather(*[send_copy(t, msg) for t in targets])
             await asyncio.sleep(FORWARD_DELAY)
         else:
             await asyncio.sleep(5)
 
-# ===== COMMAND HANDLER =====
+# ===== COMMAND =====
 @client.on(events.NewMessage(from_users='me'))
 async def command_handler(event):
     global FORWARD_ON, MODE, FORWARD_DELAY, MSG_LIMIT
@@ -140,20 +141,22 @@ async def command_handler(event):
     elif text == "/help":
         await event.reply(
             "📌 Commands:\n"
-            "/on → Forward ON\n"
-            "/off → Forward OFF\n"
-            "/mode trigger → Ultra Fast Trigger mode\n"
-            "/mode timer → Timer mode\n"
-            "/settime 200 → Timer delay\n"
-            "/setlimit 5 → Last N messages cache\n"
-            "/refresh → Force cache refresh\n"
-            "/status → Show status\n"
-            "/help → Show this help text"
+            "/on\n/off\n"
+            "/mode trigger\n"
+            "/mode timer\n"
+            "/settime 200\n"
+            "/setlimit 5\n"
+            "/refresh\n"
+            "/status"
         )
 
-# ===== START BOT =====
+# ===== START =====
 async def main():
-    await client.start()
+    await client.connect()
+
+    if not await client.is_user_authorized():
+        raise Exception("❌ Invalid SESSION")
+
     print("🔥 Userbot Started")
 
     await update_cache()
