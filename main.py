@@ -8,7 +8,7 @@ from telethon.errors import FloodWaitError
 # ===== CONFIG =====
 api_id = int(os.getenv("30041446"))
 api_hash = os.getenv("78a0ef57339654c99dbf5996d7761a67")
-SESSION = os.getenv("1BVtsOJIBu5MWmY20fZgMRv-ItHra1aml68s7D_Gm9S_f8bayF1uWOlfgbHkOq8tdXbUqA5YfTfXzhxPhGbVuvh2BZu-B7mbZoIBDiEfxaszRC-WKRqMJDyz-kmM8z-oHpRscj730-dwDqWawASvoqWmZEY5aGvtRhEuyTreZJMEn9KkVY0DmQUuy-bzPbJa0oSyTXKSJaWUE-FI_mjjyf8N7DI93uIX2PPi2KHyeSkz6hWdBDaqoSArrH2g4Q_4ipIRxVbDMaND9fgXjL2Op17iFQEA6WJTG21TWZjv8dfIV0tkeQRnrnlClU3mJ3qYA09RufPNWcTpLLtEgrV0zv0x51rAZdFQ=")
+SESSION = os.getenv("1BVtsOHQBu4z_ACP6EV4-ER7LHaSGLk1WUTryvYj6sGPMNJtNSMIOYBc7t81tEUxsl10TJoLgQzwKCS0a9myQ6ENqzdNrRG_zbqpYH_DIqOUs_EiqXcuYzG5ugTY-JV0Caejr0xzUopd8FGzyqXPbY0q9hBa4s_lY531IujFVv88lGe3RiGgkEXUo1TL0mCoZp1JVLvQ3VmY0howdhhpHbGdNUHTd_hMl3hEPZDpxZu6ZIQtwKIe8SoyUnbmy9gEeXrLzr9uGDpDPasCZMPx49JqbPbvt8CCQUNB-FYoEDdnEZ4rs4XJKMoPvpGa_sibWxsv0qGD4kjlztONuI0sx7-PkgKkSsMM=")
 
 source_channel = "@REPLITSHARE"
 
