@@ -5,11 +5,18 @@ from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError
 
-# ===== CONFIG =====
+# ===== ENV VARIABLES =====
 api_id = int(os.getenv("30041446"))
 api_hash = os.getenv("78a0ef57339654c99dbf5996d7761a67")
 SESSION = os.getenv("1BVtsOHQBu4z_ACP6EV4-ER7LHaSGLk1WUTryvYj6sGPMNJtNSMIOYBc7t81tEUxsl10TJoLgQzwKCS0a9myQ6ENqzdNrRG_zbqpYH_DIqOUs_EiqXcuYzG5ugTY-JV0Caejr0xzUopd8FGzyqXPbY0q9hBa4s_lY531IujFVv88lGe3RiGgkEXUo1TL0mCoZp1JVLvQ3VmY0howdhhpHbGdNUHTd_hMl3hEPZDpxZu6ZIQtwKIe8SoyUnbmy9gEeXrLzr9uGDpDPasCZMPx49JqbPbvt8CCQUNB-FYoEDdnEZ4rs4XJKMoPvpGa_sibWxsv0qGD4kjlztONuI0sx7-PkgKkSsMM=")
 
+if not all([api_id, api_hash, SESSION]):
+    raise Exception("Missing ENV variables (API_ID / API_HASH / SESSION)")
+
+# ===== CLIENT =====
+client = TelegramClient(StringSession(SESSION), api_id, api_hash)
+
+# ===== CONFIG =====
 source_channel = "@REPLITSHARE"
 
 targets = [
@@ -18,18 +25,8 @@ targets = [
     "@Acs_Udvash_Link",
     "@hscacademicandadmissionchatgroup",
     "@hsc_sharing",
-    "@chemistryteli",
-    "@Dacs2025",
-    "@linkedstudies",
-    "@buetkuetruetcuet",
-    "@haters_hsc",
-    "@superb1k",
-    "@HHEHRETW",
 ]
 
-client = TelegramClient(StringSession(SESSION), api_id, api_hash)
-
-# ===== CONTROL =====
 FORWARD_ON = False
 MODE = "trigger"
 FORWARD_DELAY = 200
@@ -41,7 +38,7 @@ cached_msgs = []
 async def update_cache():
     global cached_msgs
     cached_msgs = await client.get_messages(source_channel, limit=MSG_LIMIT)
-    print("⚡ Cache Updated")
+    print("Cache Updated")
 
 async def auto_cache():
     while True:
@@ -59,15 +56,15 @@ async def send_copy(target, msg):
         else:
             await client.send_message(target, msg.text or "")
     except FloodWaitError as e:
-        print(f"Flood wait: {e.seconds}s")
         await asyncio.sleep(e.seconds)
     except Exception as e:
         print("Send error:", e)
 
 # ===== TRIGGER MODE =====
 @client.on(events.NewMessage(chats=targets))
-async def trigger_mode(event):
+async def trigger(event):
     global FORWARD_ON, MODE
+
     if not FORWARD_ON or MODE != "trigger":
         return
 
@@ -81,87 +78,59 @@ async def trigger_mode(event):
     msg = random.choice(cached_msgs)
     await send_copy(event.chat_id, msg)
 
-# ===== TIMER MODE =====
+# ===== TIMER LOOP =====
 async def loop_system():
     while True:
         if FORWARD_ON and MODE == "timer":
-            if not cached_msgs:
-                await asyncio.sleep(5)
-                continue
+            if cached_msgs:
+                msg = random.choice(cached_msgs)
+                await asyncio.gather(*[send_copy(t, msg) for t in targets])
 
-            msg = random.choice(cached_msgs)
-            await asyncio.gather(*[send_copy(t, msg) for t in targets])
             await asyncio.sleep(FORWARD_DELAY)
         else:
             await asyncio.sleep(5)
 
-# ===== COMMAND =====
-@client.on(events.NewMessage(from_users='me'))
-async def command_handler(event):
+# ===== COMMANDS =====
+@client.on(events.NewMessage(from_users="me"))
+async def commands(event):
     global FORWARD_ON, MODE, FORWARD_DELAY, MSG_LIMIT
-
-    if not event.is_private:
-        return
 
     text = event.raw_text.lower()
 
     if text == "/on":
         FORWARD_ON = True
-        await event.reply("✅ Forward ON")
+        await event.reply("ON")
 
     elif text == "/off":
         FORWARD_ON = False
-        await event.reply("❌ Forward OFF")
+        await event.reply("OFF")
 
     elif text.startswith("/mode"):
         MODE = text.split()[1]
-        await event.reply(f"⚙ Mode: {MODE}")
+        await event.reply(MODE)
 
     elif text.startswith("/settime"):
         FORWARD_DELAY = int(text.split()[1])
-        await event.reply(f"⏱ Timer Delay: {FORWARD_DELAY}s")
+        await event.reply(str(FORWARD_DELAY))
 
     elif text.startswith("/setlimit"):
         MSG_LIMIT = int(text.split()[1])
         await update_cache()
-        await event.reply(f"📩 Cache Limit: {MSG_LIMIT}")
+        await event.reply("Updated")
 
-    elif text == "/refresh":
-        await update_cache()
-        await event.reply("♻ Cache Refreshed")
-
-    elif text == "/status":
-        await event.reply(
-            f"Forward: {'ON' if FORWARD_ON else 'OFF'}\n"
-            f"Mode: {MODE}\n"
-            f"Timer Delay: {FORWARD_DELAY}s\n"
-            f"Limit: {MSG_LIMIT}"
-        )
-
-    elif text == "/help":
-        await event.reply(
-            "📌 Commands:\n"
-            "/on\n/off\n"
-            "/mode trigger\n"
-            "/mode timer\n"
-            "/settime 200\n"
-            "/setlimit 5\n"
-            "/refresh\n"
-            "/status"
-        )
-
-# ===== START =====
+# ===== MAIN =====
 async def main():
     await client.connect()
 
     if not await client.is_user_authorized():
-        raise Exception("❌ Invalid SESSION")
+        raise Exception("Invalid SESSION")
 
-    print("🔥 Userbot Started")
+    print("Bot Started")
 
     await update_cache()
-    client.loop.create_task(auto_cache())
-    client.loop.create_task(loop_system())
+
+    asyncio.create_task(auto_cache())
+    asyncio.create_task(loop_system())
 
     await client.run_until_disconnected()
 
