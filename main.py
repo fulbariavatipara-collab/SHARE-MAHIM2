@@ -7,7 +7,7 @@ from telethon.errors import FloodWaitError
 # ===== DIRECT CONFIG =====
 api_id = 30041446
 api_hash = "78a0ef57339654c99dbf5996d7761a67"
-SESSION = "1BVtsOHQBu4z_ACP6EV4-ER7LHaSGLk1WUTryvYj6sGPMNJtNSMIOYBc7t81tEUxsl10TJoLgQzwKCS0a9myQ6ENqzdNrRG_zbqpYH_DIqOUs_EiqXcuYzG5ugTY-JV0Caejr0xzUopd8FGzyqXPbY0q9hBa4s_lY531IujFVv88lGe3RiGgkEXUo1TL0mCoZp1JVLvQ3VmY0howdhhpHbGdNUHTd_hMl3hEPZDpxZu6ZIQtwKIe8SoyUnbmy9gEeXrLzr9uGDpDPasCZMPx49JqbPbvt8CCQUNB-FYoEDdnEZ4rs4XJKMoPvpGa_sibWxsv0qGD4kjlztONuI0sx7-PkgKkSsMM="
+SESSION = "1BVtsOLIBux3Hr1bQmTHEwwz9lBlXJ1uZGGJTi2Yoo4Tj3iQWs9AznJmb3tykwHhz82uoaHVS_CbMh-elgdYQwqA4bVgu5wIIh4MOzWi9xMvUA93VJrgLQW70lIRqMOLprAd9FlFzQQxy3ySLUve5W8HWaKvmrTqALTXSE_qYkE0WQAuMJd-gqy-Gp0VoGufmoCOhCdrWC3o9fxkTQmGRFWg25tU43C4UNTs1ziHBY-cK2UF97lh-krgao2X_Z-K1hQR5OuAMYBMI3L26lbf1y9CIVSm3x7XzA3Va5_0YjtIT_naKzNm743SZA8uBoOmVADVr6mHBw6vCxISRRn7yREchpor6_Sk="
 
 # ===== CLIENT =====
 client = TelegramClient(StringSession(SESSION), api_id, api_hash)
